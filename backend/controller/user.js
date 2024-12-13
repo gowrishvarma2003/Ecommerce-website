@@ -7,6 +7,9 @@ const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
+const sendToken = require("../utils/jwtToken");
+require("dotenv").config();
+
 
 // create user
 router.post("/create-user", upload.single("file"), async (req, res) => {
@@ -20,6 +23,7 @@ router.post("/create-user", upload.single("file"), async (req, res) => {
         fs.unlinkSync(filepath, (err) => {
             if (err) {
                 console.log(err);
+                res.status(500).json({ message: "Error detecting file" });
             }
         });
         return next(new ErrorHandler("User already exists", 400));
@@ -31,7 +35,10 @@ router.post("/create-user", upload.single("file"), async (req, res) => {
         name: name,
         email: email,
         password: password,
-        avatar: fileUrl,
+        avatar: {
+            public_id: filename, // Example public_id
+            url: fileUrl,
+        },
     };
     const activationToken = createActivationToken(user);
     const activationUrl = `http://localhost:3000/activation/${activationToken}`;
@@ -49,31 +56,41 @@ router.post("/create-user", upload.single("file"), async (req, res) => {
 });
 
 const createActivationToken = (user) => {
-    return jwt.sign(user, process.env.ACTIVATION_SECRET, { expiresIn: "5m" });
+    console.log("ACTIVATION_SECRET:", process.env.ACTIVATION_SECRET);
+    return jwt.sign(user, process.env.ACTIVATION_SECRET, { expiresIn: "35m" });
 }
 
+
+//Milestone -7 
 router.post("/activation", catchAsyncErrors(async (req, res, next) => {
     console.log("we are hear");
     const { activation_token } = req.body;
+    // console.log(activation_token);
     try {
-        const newUser = jwt.verify(activation_token, process.env.ACTIVATION_TOKEN_SECRET);
+        const newUser = jwt.verify(activation_token, process.env.ACTIVATION_SECRET);
+        // console.log(newUser);
         if (!newUser) {
             return next(new ErrorHandler("Invalid token", 400));
         }
+        // console.log(newUser);
         const { name, email, password, avatar } = newUser;
-        let User = await User.findOne({ email });
-        if (User) {
+        console.log(name, email, password, avatar);
+        let oUser = await User.findOne({ email });
+        if (oUser) {
+            console.log("User already exists");
             return next(new ErrorHandler("User already exists", 400));
         }
-
-        let user = await User.create({
+        console.log("User does not exist");
+        let nuser = await User.create({
             name,
             email,
             avatar,
             password,
         });
-        sendToken(user, 200, res);
+        console.log("User created");
+        sendToken(nuser, 200, res);
     } catch (error) {
+        console.log(error);
         return next(new ErrorHandler("Invalid token", 400));
     }
 }
