@@ -15,6 +15,7 @@ const Login = () => {
       console.error("There was an error logging in!", error);
     }
   };
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
