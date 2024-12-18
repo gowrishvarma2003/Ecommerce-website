@@ -18,19 +18,13 @@ const CreateProduct = () => {
         { title: "Home Appliances" },
     ];
 
-    const handleImageChange = (e) => {
+    const handleImagesChange = (e) => {
         const files = Array.from(e.target.files);
 
-        setImages([]);
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                if (reader.readyState === 2) {
-                    setImages((old) => [...old, reader.result]);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        setImages((prevImages) => prevImages.concat(files));
+
+        const imagePreviews = files.map((file) => URL.createObjectURL(file));
+        setPreviewImages((prevPreviews) => prevPreviews.concat(imagePreviews));
     };
 
     const handleSubmit = (e) => {
