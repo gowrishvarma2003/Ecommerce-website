@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { AiOutlinePlusCircle } from "react-icons/ai";
+import axios from "axios";
 
 const CreateProduct = () => {
     const [images, setImages] = useState([]);
+    const [previewImages, setPreviewImages] = useState([]);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
@@ -18,45 +20,56 @@ const CreateProduct = () => {
         { title: "Home Appliances" },
     ];
 
-    const handleImageChange = (e) => {
+    const handleImagesChange = (e) => {
         const files = Array.from(e.target.files);
 
-        setImages([]);
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                if (reader.readyState === 2) {
-                    setImages((old) => [...old, reader.result]);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        setImages((prevImages) => prevImages.concat(files));
+
+        const imagePreviews = files.map((file) => URL.createObjectURL(file));
+        setPreviewImages((prevPreviews) => prevPreviews.concat(imagePreviews));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const productData = {
-            name,
-            description,
-            category,
-            tags,
-            price,
-            stock,
-            email,
-            images,
-        };
-        console.log("Product Data:", productData);
-        alert("Product created successfully!");
-        // Clear the form after submission
-        setImages([]);
-        setName("");
-        setDescription("");
-        setCategory("");
-        setTags("");
-        setPrice("");
-        setStock("");
-        setEmail("");
+        console.log("Hi")
+
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("description", description);
+        formData.append("category", category);
+        formData.append("tags", tags);
+        formData.append("price", price);
+        formData.append("stock", stock);
+        formData.append("email", email);
+
+        images.forEach((image) => {
+            formData.append("images", image);
+        });
+
+        try {
+            const response = await axios.post("http://localhost:8000/api/v2/product/create-product", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            if (response.status === 201) {
+                alert("Product created successfully!");
+                setImages([]);
+                setName("");
+                setDescription("");
+                setCategory("");
+                setTags("");
+                setPrice("");
+                setStock("");
+                setEmail("");
+            }
+        } catch (err) {
+            console.error("Error creating product:", err);
+            alert("Failed to create product. Please check the data and try again.");
+        }
     };
+
 
     return (
         <div className="w-[90%] max-w-[500px] bg-white shadow h-auto rounded-[4px] p-4 mx-auto">
@@ -160,18 +173,19 @@ const CreateProduct = () => {
                         Upload Images <span className="text-red-500">*</span>
                     </label>
                     <input
+                        name="image"
                         type="file"
                         id="upload"
                         className="hidden"
                         multiple
-                        onChange={handleImageChange}
+                        onChange={handleImagesChange}
                         required
                     />
                     <label htmlFor="upload" className="cursor-pointer">
                         <AiOutlinePlusCircle size={30} color="#555" />
                     </label>
                     <div className="flex flex-wrap mt-2">
-                        {images.map((img, index) => (
+                        {previewImages.map((img, index) => (
                             <img
                                 src={img}
                                 key={index}
