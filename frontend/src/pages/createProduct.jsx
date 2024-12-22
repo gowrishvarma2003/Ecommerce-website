@@ -56,6 +56,7 @@ const CreateProduct = () => {
             if (response.status === 201) {
                 alert("Product created successfully!");
                 setImages([]);
+                setPreviewImages([]);
                 setName("");
                 setDescription("");
                 setCategory("");
