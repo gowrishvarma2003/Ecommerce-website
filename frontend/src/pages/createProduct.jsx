@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 const CreateProduct = () => {
     const [images, setImages] = useState([]);
+    const [previewImages, setPreviewImages] = useState([]); // Added state
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
@@ -27,6 +28,13 @@ const CreateProduct = () => {
         setPreviewImages((prevPreviews) => prevPreviews.concat(imagePreviews));
     };
 
+    useEffect(() => {
+        // Cleanup object URLs to avoid memory leaks
+        return () => {
+            previewImages.forEach((url) => URL.revokeObjectURL(url));
+        };
+    }, [previewImages]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const productData = {
@@ -43,6 +51,7 @@ const CreateProduct = () => {
         alert("Product created successfully!");
         // Clear the form after submission
         setImages([]);
+        setPreviewImages([]); // Clear preview images
         setName("");
         setDescription("");
         setCategory("");
@@ -158,14 +167,14 @@ const CreateProduct = () => {
                         id="upload"
                         className="hidden"
                         multiple
-                        onChange={handleImageChange}
+                        onChange={handleImagesChange} // Corrected handler name
                         required
                     />
                     <label htmlFor="upload" className="cursor-pointer">
                         <AiOutlinePlusCircle size={30} color="#555" />
                     </label>
                     <div className="flex flex-wrap mt-2">
-                        {images.map((img, index) => (
+                        {previewImages.map((img, index) => ( // Using previewImages
                             <img
                                 src={img}
                                 key={index}
