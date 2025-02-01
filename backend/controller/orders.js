@@ -37,13 +37,16 @@ router.post('/place-order', async (req, res) => {
         });
 
         const orders = await Promise.all(orderPromises);
-        res.status(201).json({ message: 'Orders placed successfully.', orders });
+
+        // Clear user's cart after placing orders (assuming a Cart model exists)
+        await Cart.deleteMany({ user: user._id });
+
+        res.status(201).json({ message: 'Orders placed and cart cleared successfully.', orders });
     } catch (error) {
         console.error('Error placing orders:', error);
         res.status(500).json({ message: error.message });
     }
 });
-
 router.get('/my-orders', async (req, res) => {
     try {
         const { email } = req.query;
